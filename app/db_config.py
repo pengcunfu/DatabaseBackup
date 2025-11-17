@@ -22,7 +22,7 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 # 默认配置文件路径
-CONFIG_FILE = 'config.yaml'
+CONFIG_FILE = 'resources/config.yaml'
 
 def encrypt_password(password: str) -> str:
     """简单密码加密"""
