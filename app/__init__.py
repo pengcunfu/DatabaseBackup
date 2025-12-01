@@ -6,11 +6,12 @@ PyDatabaseBackup 应用包
 
 from .db_config import DatabaseConfig, create_default_config
 from .db_sync import DatabaseSynchronizer
-from .qml_backend import QMLBackend
+from .config_manager import ConfigManager, get_config_manager
 
 __all__ = [
     'DatabaseConfig',
     'create_default_config',
     'DatabaseSynchronizer',
-    'QMLBackend',
+    'ConfigManager',
+    'get_config_manager',
 ]

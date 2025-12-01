@@ -32,6 +32,7 @@ logs/
 
 # 数据库配置（包含敏感信息）
 config.yaml
+db_config.json
 
 # SQL导出文件
 *.sql

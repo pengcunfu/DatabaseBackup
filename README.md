@@ -1,17 +1,59 @@
-# MySQL 数据库同步工具
+# 数据库备份同步工具 - PySide6 Widgets 版本
 
-数据库备份工具
+## 项目概述
 
-先完成MySQL的功能，后续接入更多数据库。
+本项目已经从 QML 界面重构为传统的 PySide6 Widgets 界面，移除了所有 QML 相关代码，使用 PySide6 的默认样式。
 
+## 项目结构
 
+```
+DatabaseBackup/
+├── app/                          # 应用程序模块
+│   ├── __init__.py               # 包初始化文件
+│   ├── config_dialog.py          # 数据库配置对话框
+│   ├── config_manager.py         # 配置管理器
+│   ├── db_config.py              # 数据库配置类
+│   ├── db_sync.py                # 数据库同步核心逻辑
+│   └── main_window.py            # 主窗口界面
+├── resources/                    # 资源文件夹
+│   └── icon.png                  # 应用图标
+├── logs/                         # 日志文件夹（运行时创建）
+├── main.py                       # 主程序入口
+├── build.py                      # Nuitka 构建脚本
+├── requirements.txt              # Python 依赖
+├── db_config.json               # 数据库配置（旧版兼容）
+├── config.yaml                  # 配置文件（新版本）
+└── README.md                    # 本文件
+```
+
+## 主要变更
+
+### 1. 界面框架迁移
+- **之前**: 使用 QML (Qt Quick) 界面
+- **现在**: 使用传统 PySide6 Widgets 界面
+
+### 2. 移除的文件
+- `qml/` 文件夹及其所有内容
+- `app/qml_backend.py` QML后端桥接文件
+
+### 3. 新增的文件
+- `app/main_window.py` - 主窗口实现
+- `app/config_dialog.py` - 配置对话框实现
+
+### 4. 构建配置更新
+- 更新了 `build.py` 中的依赖文件列表
+- 移除了对 QML 文件夹的依赖
+
+### 5. 应用包更新
+- 更新了 `app/__init__.py` 移除 QML 相关导入
 
 ## 功能特性
 - 支持多数据库配置管理
 - 数据库同步（本地到远程，远程到本地）
 - SQL文件导出和执行
-- 图形化用户界面
+- 传统图形化用户界面（PySide6 Widgets）
 - 安全的配置文件管理
+- 实时日志显示和进度指示
 
 ## 安装依赖
 ```bash
@@ -22,32 +64,12 @@ pip install -r requirements.txt
 
 ### 图形界面模式
 ```bash
-python main.py  # 默认启动GUI
+python main.py  # 启动PySide6 Widgets界面
 ```
 
-### 命令行模式
-
-#### 数据库同步
+### 构建 Windows 可执行文件
 ```bash
-# 从本地同步到远程数据库
-python main.py --mode sync --source local --target remote
-
-# 从远程同步到本地数据库
-python main.py --mode sync --source remote --target local
-```
-
-#### SQL文件导出
-```bash
-# 导出本地数据库（包含数据）
-python main.py --mode export --database local --output local_db.sql --include-data
-
-# 仅导出数据库结构
-python main.py --mode export --database local --output local_db_structure.sql
-```
-
-#### 执行SQL文件
-```bash
-python main.py --mode execute --database local --sql-file path/to/script.sql
+python build.py
 ```
 
 ## 配置文件 (config.yaml)
