@@ -36,6 +36,9 @@ def setup_application():
     app.setApplicationName("数据库备份同步工具")
     app.setOrganizationName("PyDatabaseBackup")
 
+    # 设置Windows Vista主题
+    app.setStyle("windowsvista")
+
     # 设置应用图标
     icon_path = Path(__file__).parent / "resources" / "icon.png"
     if icon_path.exists():
