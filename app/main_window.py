@@ -53,6 +53,11 @@ class SyncWorker(QThread):
                 result = sync.sync_local_to_remote()
             elif self.sync_type == '导出SQL':
                 result = sync.export_sql()
+            elif self.sync_type == '导入SQL':
+                if not self.sql_file or not os.path.exists(self.sql_file):
+                    self.sync_finished.emit(False, "SQL 文件不存在")
+                    return
+                result = sync.import_sql(self.sql_file)
             elif self.sync_type == '执行SQL':
                 if not self.sql_file or not os.path.exists(self.sql_file):
                     self.sync_finished.emit(False, "SQL 文件不存在")
@@ -118,7 +123,7 @@ class MainWindow(QMainWindow):
         control_layout.addWidget(QLabel("同步模式:"))
 
         self.sync_type_combo = QComboBox()
-        self.sync_type_combo.addItems(["远程到本地", "本地到远程", "导出SQL", "执行SQL"])
+        self.sync_type_combo.addItems(["远程到本地", "本地到远程", "导出SQL", "导入SQL", "执行SQL"])
         self.sync_type_combo.currentTextChanged.connect(self.on_sync_type_changed)
         control_layout.addWidget(self.sync_type_combo)
 
@@ -240,7 +245,7 @@ class MainWindow(QMainWindow):
 
     def on_sync_type_changed(self, sync_type):
         """同步类型改变时的处理"""
-        is_sql_mode = sync_type == "执行SQL"
+        is_sql_mode = sync_type in ["导入SQL", "执行SQL"]
         self.sql_frame.setVisible(is_sql_mode)
 
         if not is_sql_mode:
@@ -291,6 +296,15 @@ class MainWindow(QMainWindow):
                 source_config = local_config
                 self.log_output.append("[INFO] 模式: 导出SQL")
                 self.log_output.append(f"  数据库: {source_config.get('host')}:{source_config.get('port')}/{source_config.get('database')}")
+            elif sync_type == "导入SQL":
+                target_config = local_config
+                if not self.sql_file_path:
+                    self.log_output.append("[ERROR] 请选择要导入的 SQL 文件")
+                    QMessageBox.warning(self, "警告", "请选择要导入的 SQL 文件")
+                    return
+                self.log_output.append("[INFO] 模式: 导入SQL")
+                self.log_output.append(f"  目标: {target_config.get('host')}:{target_config.get('port')}/{target_config.get('database')}")
+                self.log_output.append(f"  文件: {self.sql_file_path}")
             elif sync_type == "执行SQL":
                 target_config = local_config
                 self.log_output.append("[INFO] 模式: 执行SQL")
@@ -325,8 +339,11 @@ class MainWindow(QMainWindow):
                     database=source_config.get('database')
                 )
             else:
-                # 导出SQL或执行SQL只需要一个配置
-                use_config = source_config if sync_type == "导出SQL" else target_config
+                # 导出SQL、导入SQL或执行SQL只需要一个配置
+                if sync_type == "导出SQL":
+                    use_config = source_config
+                else:  # 导入SQL 或 执行SQL
+                    use_config = target_config
                 valid, msg = self.config_manager.validate_config(use_config)
                 if not valid:
                     self.log_output.append(f"[ERROR] 数据库配置无效: {msg}")

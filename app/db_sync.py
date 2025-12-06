@@ -536,18 +536,81 @@ class DatabaseSynchronizer:
             conn = self.connect_single_database(self.source_config)
             if not conn:
                 return "数据库连接失败"
-            
+
             # 使用配置中的SQL文件路径
             sql_file = self.source_config.sql_file
-            
+
             success, errors = self.execute_sql_file(conn, sql_file)
             conn.close()
-            
+
             return f"SQL执行成功" if success else f"SQL执行部分失败: {len(errors)} 个错误"
-        
+
         except Exception as e:
             logger.error(f"SQL执行失败: {str(e)}")
             return f"执行失败: {str(e)}"
+
+    def import_sql(self, sql_file_path: str) -> str:
+        """导入SQL文件（与execute_sql功能相同，但提供更明确的语义）"""
+        try:
+            conn = self.connect_single_database(self.source_config)
+            if not conn:
+                return "数据库连接失败"
+
+            logger.info(f"开始导入SQL文件: {sql_file_path}")
+
+            # 验证文件存在
+            if not os.path.exists(sql_file_path):
+                return f"SQL文件不存在: {sql_file_path}"
+
+            # 获取文件大小用于进度报告
+            file_size = os.path.getsize(sql_file_path)
+            logger.info(f"SQL文件大小: {file_size} 字节")
+
+            success, errors = self.execute_sql_file(conn, sql_file_path)
+            conn.close()
+
+            if success:
+                return f"SQL导入成功: {sql_file_path}"
+            else:
+                error_count = len(errors) if errors else 0
+                return f"SQL导入部分完成: {error_count} 个错误"
+
+        except Exception as e:
+            logger.error(f"SQL导入失败: {str(e)}")
+            return f"导入失败: {str(e)}"
+
+    def export_sql_with_options(self, output_dir: str = None, include_data: bool = True,
+                              exclude_tables: List[str] = None, include_tables: List[str] = None) -> str:
+        """导出SQL文件（带更多选项）"""
+        try:
+            conn = self.connect_single_database(self.source_config)
+            if not conn:
+                return "数据库连接失败"
+
+            # 生成导出文件名
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            if output_dir:
+                os.makedirs(output_dir, exist_ok=True)
+                output_path = os.path.join(output_dir, f"export_{self.source_config.database}_{timestamp}.sql")
+            else:
+                output_path = f"export_{self.source_config.database}_{timestamp}.sql"
+
+            logger.info(f"导出SQL到: {output_path}")
+            logger.info(f"包含数据: {include_data}")
+
+            if exclude_tables:
+                logger.info(f"排除表: {exclude_tables}")
+            if include_tables:
+                logger.info(f"仅包含表: {include_tables}")
+
+            success = self.export_database_sql(conn, output_path, exclude_tables, include_tables, include_data)
+            conn.close()
+
+            return f"SQL导出成功: {output_path}" if success else "SQL导出部分失败"
+
+        except Exception as e:
+            logger.error(f"SQL导出失败: {str(e)}")
+            return f"导出失败: {str(e)}"
 
 # 直接测试模块
 if __name__ == "__main__":
