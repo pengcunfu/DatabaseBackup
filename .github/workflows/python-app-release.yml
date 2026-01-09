@@ -43,8 +43,8 @@ jobs:
 
     - name: 验证编译结果
       run: |
-        if not exist "dist\main.dist\main.exe" (
-          echo Error: main.exe not found
+        if not exist "dist\main.dist\DatabaseBackup.exe" (
+          echo Error: DatabaseBackup.exe not found
           exit /b 1
         )
         echo Build verification passed
@@ -87,8 +87,8 @@ jobs:
     - name: 创建发布包
       run: |
         mkdir release
-        copy output\DatabaseBackup-Setup-1.0.0.exe release\DatabaseBackup-Setup-${{ steps.get_version.outputs.version }}.exe
-        copy dist\main.dist\main.exe release\main.exe
+        copy output\DatabaseBackup-Setup-%VERSION%.exe release\DatabaseBackup-Setup-%VERSION%.exe
+        copy dist\main.dist\DatabaseBackup.exe release\DatabaseBackup.exe
       shell: cmd
 
     - name: 创建压缩包（可选）
@@ -120,13 +120,46 @@ jobs:
     - name: 构建摘要
       if: always()
       run: |
-        echo "## 构建完成 :rocket:" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**版本:** ${{ steps.get_version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-        echo "**平台:** Windows" >> $GITHUB_STEP_SUMMARY
-        echo "**状态:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 下载文件:" >> $GITHUB_STEP_SUMMARY
-        echo "- DatabaseBackup-Setup-${{ steps.get_version.outputs.version }}.exe (安装程序)" >> $GITHUB_STEP_SUMMARY
-        echo "- DatabaseBackup-Portable-${{ steps.get_version.outputs.version }}.zip (便携版)" >> $GITHUB_STEP_SUMMARY
+        # 读取 RELEASE_TEMPLATE.md 并生成构建摘要
+        if [ -f ".github/RELEASE_TEMPLATE.md" ]; then
+          # 替换模板中的占位符
+          VERSION=${{ steps.get_version.outputs.version }}
+          DATE=$(date +%Y-%m-%d)
+
+          # 处理可执行文件名（从 main.dist 目录中获取）
+          if [ -f "dist/main.dist/DatabaseBackup.exe" ]; then
+            EXE_NAME="DatabaseBackup.exe"
+          else
+            EXE_NAME="main.exe"
+          fi
+
+          # 读取模板并替换占位符
+          sed -e "s/{VERSION}/$VERSION/g" \
+              -e "s/{DATE}/$DATE/g" \
+              -e "s/main\.exe/$EXE_NAME/g" \
+              -e "s/{PREV_VERSION}/$VERSION/g" \
+              .github/RELEASE_TEMPLATE.md > $GITHUB_STEP_SUMMARY
+
+          # 添加构建信息
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🏗️ 构建信息" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **版本:** $VERSION" >> $GITHUB_STEP_SUMMARY
+          echo "- **平台:** Windows" >> $GITHUB_STEP_SUMMARY
+          echo "- **状态:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **可执行文件:** $EXE_NAME" >> $GITHUB_STEP_SUMMARY
+          echo "- **工作流:** ${{ github.workflow }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **运行ID:** [${{ github.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
+        else
+          # 如果模板文件不存在，使用默认格式
+          echo "## 构建完成 :rocket:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**版本:** ${{ steps.get_version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**平台:** Windows" >> $GITHUB_STEP_SUMMARY
+          echo "**状态:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 下载文件:" >> $GITHUB_STEP_SUMMARY
+          echo "- DatabaseBackup-Setup-${{ steps.get_version.outputs.version }}.exe (安装程序)" >> $GITHUB_STEP_SUMMARY
+          echo "- DatabaseBackup-Portable-${{ steps.get_version.outputs.version }}.zip (便携版)" >> $GITHUB_STEP_SUMMARY
+        fi
       shell: bash

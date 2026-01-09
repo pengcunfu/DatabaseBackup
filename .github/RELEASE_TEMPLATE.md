@@ -17,7 +17,7 @@
 #### 方式2：使用便携版
 1. 下载 `DatabaseBackup-Portable-{VERSION}.zip`
 2. 解压到任意文件夹
-3. 双击 `main.exe` 运行
+3. 双击 `DatabaseBackup.exe` 运行
 
 ### 🔧 Usage
 See the [README](../README.md) for usage instructions.

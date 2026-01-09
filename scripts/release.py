@@ -303,7 +303,7 @@ def interactive_release():
 
     # 提交版本号更改
     print("\n提交版本号更改...")
-    run_command(f"git add scripts/")
+    run_command(f"git add version.py scripts/")
     run_command(f'git commit -m "Bump version to {new_version}"')
 
     # 创建Git标签
@@ -344,7 +344,7 @@ def quick_release(version_type="patch"):
     update_version_files(new_version)
 
     # 提交
-    run_command(f"git add scripts/")
+    run_command(f"git add version.py scripts/")
     run_command(f'git commit -m "Bump version to {new_version}"')
 
     # 创建标签
@@ -423,7 +423,7 @@ def main():
 
             check_git_status()
             update_version_files(version)
-            run_command(f"git add scripts/")
+            run_command(f"git add version.py scripts/")
             run_command(f'git commit -m "Bump version to {version}"')
             create_git_tag(version, f"Release {version}")
             push_to_remote(version)
