@@ -76,10 +76,11 @@ def check_prerequisites():
 
     print(f"✓ 找到编译后的程序: {MAIN_DIST_DIR}")
 
-    # 检查main.exe是否存在
-    main_exe = MAIN_DIST_DIR / "main.exe"
+    # 检查可执行文件是否存在
+    exe_name = "DatabaseBackup.exe"
+    main_exe = MAIN_DIST_DIR / exe_name
     if not main_exe.exists():
-        print(f"✗ 错误: 找不到 main.exe")
+        print(f"✗ 错误: 找不到 {exe_name}")
         print(f"  期望路径: {main_exe}")
         return False
 

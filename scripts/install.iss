@@ -13,7 +13,7 @@
 
 ; 安装程序基本配置
 #define INSTALLER_NAME "DatabaseBackup-Setup-" + PRODUCT_VERSION
-#define MAIN_EXE_NAME "main.exe"
+#define MAIN_EXE_NAME "DatabaseBackup.exe"
 #define PRODUCT_PUBLISHER COMPANY_NAME
 #define PRODUCT_WEB_SITE "https://github.com/pengcunfu"
 
