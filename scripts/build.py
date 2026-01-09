@@ -1,16 +1,13 @@
 import os
 import sys
 from pathlib import Path
+from pathlib import Path as Pathlib
 
-# 版本信息
-VERSION = "0.0.2"
-YEAR = "2025"
-AUTHOR = "pengcunfu"
+# 导入统一的版本信息
+sys.path.insert(0, str(Pathlib(__file__).parent.parent))
+from version import VERSION, YEAR, AUTHOR, PRODUCT_NAME, COMPANY_NAME, DESCRIPTION
 
-# 项目信息
-PRODUCT_NAME = "Database Backup Tool"
-COMPANY_NAME = "PyDatabaseBackup"
-DESCRIPTION = "MySQL Database Backup and Synchronization Tool"
+# 构建配置
 MAIN_FILE = "main.py"
 
 

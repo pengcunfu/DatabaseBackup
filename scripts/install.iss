@@ -1,21 +1,47 @@
 ; ===============================================
 ; Database Backup Tool - Inno Setup 安装脚本
 ; ===============================================
+;
+; 注意：以下版本信息由 build_installer.py 通过命令行参数传递
+; 如果直接使用 ISCC.exe 编译，需要手动定义以下变量：
+;   /dPRODUCT_VERSION, /dYEAR, /dAUTHOR, /dCOMPANY_NAME, /dPRODUCT_NAME, /dDESCRIPTION
+;
+; 示例：
+;   ISCC.exe /dPRODUCT_VERSION="0.0.2" /dYEAR="2025" install.iss
+; ===============================================
 
 ; ------------------- 配置区域 -------------------
 
-#define PRODUCT_NAME "Database Backup Tool"
-#define PRODUCT_VERSION "0.0.2"
-#define COMPANY_NAME "PyDatabaseBackup"
-#define DESCRIPTION "MySQL Database Backup and Synchronization Tool"
-#define AUTHOR "pengcunfu"
-#define YEAR "2025"
+; 默认值（仅当未通过命令行传递时使用）
+#ifndef PRODUCT_VERSION
+  #define PRODUCT_VERSION "0.0.2"
+#endif
+
+#ifndef YEAR
+  #define YEAR "2025"
+#endif
+
+#ifndef AUTHOR
+  #define AUTHOR "pengcunfu"
+#endif
+
+#ifndef PRODUCT_NAME
+  #define PRODUCT_NAME "Database Backup Tool"
+#endif
+
+#ifndef COMPANY_NAME
+  #define COMPANY_NAME "PyDatabaseBackup"
+#endif
+
+#ifndef DESCRIPTION
+  #define DESCRIPTION "MySQL Database Backup and Synchronization Tool"
+#endif
 
 ; 安装程序基本配置
 #define INSTALLER_NAME "DatabaseBackup-Setup-" + PRODUCT_VERSION
 #define MAIN_EXE_NAME "DatabaseBackup.exe"
 #define PRODUCT_PUBLISHER COMPANY_NAME
-#define PRODUCT_WEB_SITE "https://github.com/pengcunfu"
+#define PRODUCT_WEB_SITE "https://github.com/pengcunfu/DatabaseBackup"
 
 ; 源文件目录（编译后的程序）
 ; 注意：脚本在scripts目录，所以需要向上一级

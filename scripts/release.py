@@ -13,18 +13,17 @@ import re
 from pathlib import Path
 from datetime import datetime
 
+# 导入统一的版本信息
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from version import VERSION, PROJECT_NAME, COMPANY_NAME, REPO_URL, GITHUB_USER, GITHUB_REPO
 
 # ==================== 配置区域 ====================
-# 项目信息
-PROJECT_NAME = "Database Backup Tool"
-COMPANY_NAME = "PyDatabaseBackup"
-REPO_URL = "https://github.com/pengcunfu/DatabaseBackup"
+# 项目信息（从 version.py 导入）
+# PROJECT_NAME, COMPANY_NAME, REPO_URL 已在上方导入
 
-# 版本文件路径
+# 版本文件路径 - 现在只需要更新 version.py
 VERSION_FILES = [
-    "scripts/build.py",
-    "scripts/build_installer.py",
-    "scripts/install.iss",
+    "version.py",
 ]
 
 # Git配置
@@ -98,23 +97,23 @@ def run_command(cmd, check=True, capture_output=True):
 
 
 def get_current_version():
-    """从build.py获取当前版本号"""
-    build_py = Path("scripts/build.py")
-    if not build_py.exists():
-        print(f"错误: 找不到 {build_py}")
+    """从 version.py 获取当前版本号"""
+    version_file = Path("version.py")
+    if not version_file.exists():
+        print(f"错误: 找不到 {version_file}")
         sys.exit(1)
 
-    content = build_py.read_text(encoding='utf-8')
+    content = version_file.read_text(encoding='utf-8')
     match = re.search(r'VERSION\s*=\s*["\']([\d.]+)["\']', content)
     if match:
         return Version.from_string(match.group(1))
 
-    print("错误: 无法从build.py中解析版本号")
+    print("错误: 无法从 version.py 中解析版本号")
     sys.exit(1)
 
 
 def update_version_files(new_version):
-    """更新所有文件中的版本号"""
+    """更新 version.py 中的版本号"""
     old_version = get_current_version()
     version_str = str(new_version)
 
@@ -129,22 +128,15 @@ def update_version_files(new_version):
         content = file_path.read_text(encoding='utf-8')
         original_content = content
 
-        # 更新版本号（支持多种格式）
-        patterns = [
-            (r'VERSION\s*=\s*["\'][\d.]+["\']', f'VERSION = "{version_str}"'),
-            (r'PRODUCT_VERSION\s*=\s*["\'][\d.]+["\']', f'PRODUCT_VERSION = "{version_str}"'),
-            (r'#define\s+PRODUCT_VERSION\s+"[\d.]+"', f'#define PRODUCT_VERSION "{version_str}"'),
-            (r'AppVersion=[\d.]+', f'AppVersion={version_str}'),
-            (r'VersionInfoVersion=[\d.]+', f'VersionInfoVersion={version_str}'),
-            (r'VersionInfoProductVersion=[\d.]+', f'VersionInfoProductVersion={version_str}'),
-        ]
-
-        for pattern, replacement in patterns:
-            content = re.sub(pattern, replacement, content)
+        # 更新版本号
+        pattern = r'VERSION\s*=\s*["\'][\d.]+["\']'
+        replacement = f'VERSION = "{version_str}"'
+        content = re.sub(pattern, replacement, content)
 
         if content != original_content:
             file_path.write_text(content, encoding='utf-8')
             print(f"✓ 已更新: {file_path}")
+            print(f"  版本号: {version_str}")
 
 
 def check_git_status():

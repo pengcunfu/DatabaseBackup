@@ -14,16 +14,9 @@ if sys.platform == "win32":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
-
-# 配置区域
-VERSION = "0.0.2"
-YEAR = "2025"
-AUTHOR = "pengcunfu"
-
-# 项目信息
-PRODUCT_NAME = "Database Backup Tool"
-COMPANY_NAME = "PyDatabaseBackup"
-DESCRIPTION = "MySQL Database Backup and Synchronization Tool"
+# 导入统一的版本信息
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from version import VERSION, YEAR, AUTHOR, PRODUCT_NAME, COMPANY_NAME, DESCRIPTION
 
 # 目录配置
 PROJECT_ROOT = Path(__file__).parent.parent
