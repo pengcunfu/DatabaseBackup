@@ -28,6 +28,8 @@ from .config_dialog import ConfigDialog
 from .task_scheduler import TaskScheduler
 from .task_dialog import TaskDialog
 from .scheduler_config import ScheduledTask
+from .update_manager import UpdateManager, get_current_version
+from .update_config import get_update_config
 
 logger = logging.getLogger(__name__)
 
@@ -95,6 +97,11 @@ class MainWindow(QMainWindow):
         # 定时任务调度器
         self.task_scheduler = TaskScheduler(self.config_manager, self.on_scheduler_log)
 
+        # 更新管理器
+        self.update_manager = UpdateManager(self)
+        self.update_config = get_update_config()
+        self.current_version = get_current_version()
+
         self.init_ui()
         self.init_menu()
         self.init_toolbar()
@@ -102,6 +109,9 @@ class MainWindow(QMainWindow):
 
         # 加载配置
         QTimer.singleShot(100, self.load_config)
+
+        # 延迟检查更新（启动3秒后）
+        QTimer.singleShot(3000, self.auto_check_update)
 
     def init_ui(self):
         """初始化用户界面"""
@@ -159,6 +169,12 @@ class MainWindow(QMainWindow):
 
         # 帮助菜单
         help_menu = menubar.addMenu("帮助")
+
+        check_update_action = QAction("检查更新", self)
+        check_update_action.triggered.connect(self.check_for_updates)
+        help_menu.addAction(check_update_action)
+
+        help_menu.addSeparator()
 
         about_action = QAction("关于", self)
         about_action.triggered.connect(self.show_about)
@@ -587,12 +603,32 @@ class MainWindow(QMainWindow):
 
     def show_about(self):
         """显示关于对话框"""
-        QMessageBox.about(self, "关于",
-            "数据库备份同步工具\n"
-            "版本: 1.0.0\n"
-            "基于 PySide6 开发的数据库管理工具\n\n"
-            "© 2025 Database Backup Tool"
+        QMessageBox.about(self,
+            "关于 数据库备份同步工具",
+            f"<h2>数据库备份同步工具</h2>"
+            f"<p><b>版本:</b> {self.current_version}</p>"
+            f"<p>基于 PySide6 开发的数据库管理工具</p>"
+            f"<p><b>主要功能:</b></p>"
+            "<ul>"
+            "<li>MySQL数据库备份与同步</li>"
+            "<li>SQL文件导入导出</li>"
+            "<li>定时任务调度</li>"
+            "<li>自动更新检查</li>"
+            "</ul>"
+            f"<p><b>项目地址:</b> <a href='https://github.com/pengcunfu/DatabaseBackup'>https://github.com/pengcunfu/DatabaseBackup</a></p>"
+            "<p>© 2025 Database Backup Tool</p>"
         )
+
+    def check_for_updates(self):
+        """检查更新"""
+        self.update_manager.check_for_updates(self.current_version)
+
+    def auto_check_update(self):
+        """自动检查更新"""
+        if self.update_config.should_check_update():
+            logger.info("自动检查更新...")
+            self.update_manager.check_for_updates(self.current_version)
+            self.update_config.update_last_check()
 
     def closeEvent(self, event):
         """窗口关闭事件"""
