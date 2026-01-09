@@ -16,7 +16,7 @@ if sys.platform == "win32":
 
 
 # ==================== 配置区域 ====================
-VERSION = "1.0.0"
+VERSION = "0.0.1"
 YEAR = "2025"
 AUTHOR = "pengcunfu"
 

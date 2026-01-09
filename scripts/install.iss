@@ -5,7 +5,7 @@
 ; ------------------- 配置区域 -------------------
 
 #define PRODUCT_NAME "Database Backup Tool"
-#define PRODUCT_VERSION "1.0.0"
+#define PRODUCT_VERSION "0.0.1"
 #define COMPANY_NAME "PyDatabaseBackup"
 #define DESCRIPTION "MySQL Database Backup and Synchronization Tool"
 #define AUTHOR "pengcunfu"
