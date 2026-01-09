@@ -15,7 +15,10 @@ from datetime import datetime
 
 # 导入统一的版本信息
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from version import VERSION, PROJECT_NAME, COMPANY_NAME, REPO_URL, GITHUB_USER, GITHUB_REPO
+from version import VERSION, PRODUCT_NAME, COMPANY_NAME, REPO_URL, GITHUB_USER, GITHUB_REPO
+
+# 兼容性：将 PRODUCT_NAME 映射为 PROJECT_NAME
+PROJECT_NAME = PRODUCT_NAME
 
 # ==================== 配置区域 ====================
 # 项目信息（从 version.py 导入）
