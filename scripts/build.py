@@ -46,6 +46,7 @@ def build_windows():
         f'--copyright="Copyright(C) {YEAR} {AUTHOR}"',
 
         '--output-dir=dist',
+        '--output-filename=DatabaseBackup.exe',
         MAIN_FILE,
     ]
 
@@ -88,6 +89,7 @@ def build_macos():
         f'--copyright="Copyright(C) {YEAR} {AUTHOR}"',
 
         '--output-dir=dist',
+        '--output-filename=DatabaseBackup',
         MAIN_FILE,
     ]
 
@@ -119,6 +121,7 @@ def build_linux():
 
         '--linux-icon=resources/icon.png' if Path('resources/icon.png').exists() else '',
         '--output-dir=dist',
+        '--output-filename=DatabaseBackup.bin',
         MAIN_FILE,
     ]
 
