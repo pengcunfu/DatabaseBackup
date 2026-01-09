@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 
 # 版本信息
-VERSION = "0.0.1"
+VERSION = "0.0.2"
 YEAR = "2025"
 AUTHOR = "pengcunfu"
 
