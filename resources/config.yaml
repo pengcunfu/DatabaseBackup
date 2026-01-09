@@ -1,0 +1,19 @@
+databases:
+  local:
+    database: robot_management_local
+    host: localhost
+    password: bG9jYWxfcGFzc3dvcmQ=
+    port: 3306
+    username: root
+  remote:
+    database: robot_management
+    host: 192.168.1.100
+    password: cmVtb3RlX3Bhc3N3b3Jk
+    port: 3306
+    username: root
+sync_options:
+  drop_target_tables: true
+  exclude_tables:
+  - user_sessions
+  - login_attempts
+  include_tables: []
