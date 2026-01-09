@@ -119,7 +119,6 @@ def update_version_files(new_version):
     version_str = str(new_version)
 
     print(f"\n更新版本号: {old_version} -> {new_version}")
-    print("=" * 60)
 
     for file_path in VERSION_FILES:
         file_path = Path(file_path)
@@ -151,7 +150,6 @@ def update_version_files(new_version):
 def check_git_status():
     """检查Git工作目录状态"""
     print("\n检查Git状态...")
-    print("=" * 60)
 
     # 检查是否有未提交的更改
     result = run_command("git status --porcelain")
@@ -194,7 +192,6 @@ def create_git_tag(version, message):
     """创建Git标签"""
     tag_name = f"v{version}"
     print(f"\n创建Git标签: {tag_name}")
-    print("=" * 60)
 
     # 检查标签是否已存在
     result = run_command(f"git tag -l {tag_name}")
@@ -216,7 +213,6 @@ def create_git_tag(version, message):
 def push_to_remote(version):
     """推送到远程仓库"""
     print(f"\n推送到远程仓库")
-    print("=" * 60)
 
     # 推送提交
     print("推送代码...")
@@ -257,9 +253,7 @@ See the [README](../../#readme) for usage instructions.
 
 def interactive_release():
     """交互式发布流程"""
-    print("=" * 60)
     print(f"{PROJECT_NAME} - 自动化版本发布工具")
-    print("=" * 60)
 
     # 获取当前版本
     current_version = get_current_version()
@@ -303,11 +297,10 @@ def interactive_release():
         release_message = f"Release {new_version}"
 
     # 确认
-    print("\n" + "=" * 60)
+    print("\n")
     print("发布信息预览:")
     print(f"  版本号: {current_version} -> {new_version}")
     print(f"  说明: {release_message}")
-    print("=" * 60)
 
     response = input("\n确认发布？(y/N): ")
     if response.lower() != 'y':
@@ -332,15 +325,13 @@ def interactive_release():
     push_to_remote(new_version)
 
     # 显示成功信息
-    print("\n" + "=" * 60)
+    print("\n")
     print("✓ 版本发布成功！")
-    print("=" * 60)
     print(f"版本号: {new_version}")
     print(f"标签: v{new_version}")
     print(f"\nGitHub Actions正在构建和发布...")
     print(f"查看构建状态: {REPO_URL}/actions")
     print(f"查看Release: {REPO_URL}/releases/tag/v{new_version}")
-    print("=" * 60)
 
 
 def quick_release(version_type="patch"):

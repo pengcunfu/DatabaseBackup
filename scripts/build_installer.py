@@ -15,7 +15,7 @@ if sys.platform == "win32":
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
 
-# ==================== 配置区域 ====================
+# 配置区域
 VERSION = "0.0.1"
 YEAR = "2025"
 AUTHOR = "pengcunfu"
@@ -45,7 +45,6 @@ INNO_SETUP_PATHS = [
     r"C:\Program Files\Inno Setup 6\ISCC.exe",
     r"C:\Inno Setup 6\ISCC.exe",
 ]
-# =================================================
 
 
 def find_inno_setup():
@@ -66,9 +65,7 @@ def find_inno_setup():
 
 def check_prerequisites():
     """检查前提条件"""
-    print("=" * 60)
     print("检查前提条件...")
-    print("=" * 60)
 
     # 检查编译后的程序是否存在
     if not MAIN_DIST_DIR.exists():
@@ -109,15 +106,12 @@ def check_prerequisites():
 
     print(f"✓ 找到Inno Setup: {iscc_path}")
 
-    print("=" * 60)
     return True
 
 
 def build_installer():
     """构建安装程序"""
-    print("\n" + "=" * 60)
-    print("开始构建安装程序...")
-    print("=" * 60)
+    print("\n开始构建安装程序...")
 
     # 创建输出目录
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -169,20 +163,17 @@ def build_installer():
         # 检查结果
         if result.returncode == 0 and EXPECTED_INSTALLER.exists():
             file_size = EXPECTED_INSTALLER.stat().st_size / (1024 * 1024)  # MB
-            print("\n" + "=" * 60)
+            print("\n")
             print("✓ 安装程序构建成功！")
-            print("=" * 60)
             print(f"文件路径: {EXPECTED_INSTALLER}")
             print(f"文件大小: {file_size:.2f} MB")
             print(f"\n您现在可以:")
             print(f"1. 分发此安装程序给其他用户")
             print(f"2. 双击运行进行安装测试")
-            print("=" * 60)
             return True
         else:
-            print("\n" + "=" * 60)
+            print("\n")
             print("✗ 安装程序构建失败")
-            print("=" * 60)
             print(f"返回码: {result.returncode}")
             if EXPECTED_INSTALLER.exists():
                 print(f"警告: 虽然返回码非0，但安装程序文件已生成")
@@ -196,11 +187,9 @@ def build_installer():
 
 def main():
     """主函数"""
-    print("=" * 60)
     print(f"Inno Setup安装程序构建工具")
     print(f"产品: {PRODUCT_NAME}")
     print(f"版本: {VERSION}")
-    print("=" * 60)
 
     # 检查前提条件
     if not check_prerequisites():
