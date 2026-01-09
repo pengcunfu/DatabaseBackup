@@ -1,56 +1,48 @@
-# GetFileHash {VERSION}
+## Release {VERSION} - {DATE}
 
-## 下载说明
+### 🚀 Features
+- New features and improvements
 
-### 📦 推荐下载：安装程序版本
-- **文件名**: `GetFileHash-Setup-{VERSION}.exe`
-- **说明**: 完整的Windows安装程序，包含卸载功能
-- **优点**: 自动创建桌面快捷方式、开始菜单项，支持程序卸载
+### 🐛 Bug Fixes
+- Bug fixes and optimizations
 
-### 🗂️ 便携版本
-- **文件名**: `GetFileHash-{VERSION}.zip`
-- **说明**: 绿色便携版，解压即可使用
-- **优点**: 无需安装，不写入注册表，适合U盘使用
+### 📦 Installation
 
-## 功能特性
-- 🎨 现代化图形用户界面
-- 📊 大文件计算进度显示
-- 📋 一键复制哈希值到剪贴板
-- 🚀 支持任意大小的文件
-- 💻 跨平台支持（Windows、Linux、macOS）
-- 🔄 支持多种哈希算法：MD5、SHA-1、SHA-256、SHA-384、SHA-512
-- 📝 支持文件和文本哈希计算
-- 🖱️ 支持文件拖拽操作
-
-## 安装说明
-
-### 安装程序版本
-1. 下载 `GetFileHash-Setup-{VERSION}.exe`
+#### 方式1：使用安装程序（推荐）
+1. 下载 `DatabaseBackup-Setup-{VERSION}.exe`
 2. 双击运行安装程序
 3. 按照向导完成安装
 4. 从桌面或开始菜单启动程序
 
-### 便携版本
-1. 下载 `GetFileHash-{VERSION}.zip`
+#### 方式2：使用便携版
+1. 下载 `DatabaseBackup-Portable-{VERSION}.zip`
 2. 解压到任意文件夹
-3. 双击 `GetFileHash.exe` 运行
+3. 双击 `main.exe` 运行
 
-## 使用说明
-1. 选择文件或输入文本
-2. 选择哈希算法
-3. 点击计算按钮
-4. 复制计算结果
+### 🔧 Usage
+See the [README](../README.md) for usage instructions.
 
-## 系统要求
-- Windows 10 及以上版本
-- **推荐**: 安装程序版本需要管理员权限进行安装
-- **便携**: 无需特殊权限
+### 📝 What's Changed
 
-## 技术栈
-- Python 3.9
-- PySide6 (Qt for Python)
-- Nuitka (编译工具)
-- Inno Setup (安装程序制作)
+#### 新增功能
+- 新增功能列表
 
-## 许可证
-MIT License
+#### 改进
+- 改进内容列表
+
+#### 问题修复
+- 问题修复列表
+
+### 📋 System Requirements
+- **OS**: Windows 10/11, Linux, macOS
+- **Python**: 3.9+ (for source code version)
+- **Database**: MySQL 5.7+ or MariaDB 10.3+
+
+### 🔗 Links
+- **Homepage**: https://github.com/pengcunfu/DatabaseBackup
+- **Documentation**: https://github.com/pengcunfu/DatabaseBackup/blob/main/docs/
+- **Issue Tracker**: https://github.com/pengcunfu/DatabaseBackup/issues
+
+---
+
+**Full Changelog**: https://github.com/pengcunfu/DatabaseBackup/compare/v{PREV_VERSION}...v{VERSION}

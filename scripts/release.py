@@ -227,27 +227,23 @@ def push_to_remote(version):
 
 
 def generate_release_notes(version):
-    """生成Release说明"""
+    """生成Release说明（从模板文件读取）"""
+
+    # 读取模板文件
+    template_file = Path(__file__).parent.parent / ".github" / "RELEASE_TEMPLATE.md"
+    template_content = template_file.read_text(encoding='utf-8')
+
+    # 计算上一个版本号
+    version_parts = version.split('.')
+    prev_version = '.'.join(version_parts[:-1] + [str(int(version_parts[-1]) - 1)])
+
+    # 替换模板中的占位符
     date = datetime.now().strftime("%Y-%m-%d")
 
-    notes = f"""## Release {version} - {date}
+    notes = template_content.replace("{VERSION}", version)
+    notes = notes.replace("{DATE}", date)
+    notes = notes.replace("{PREV_VERSION}", prev_version)
 
-### 🚀 Features
-- New features and improvements
-
-### 🐛 Bug Fixes
-- Bug fixes and optimizations
-
-### 📦 Installation
-Download the installer from the [Releases](../../releases) page.
-
-### 🔧 Usage
-See the [README](../../#readme) for usage instructions.
-
----
-
-**Full Changelog**: https://github.com/pengcunfu/DatabaseBackup/compare/v{version}...HEAD
-"""
     return notes
 
 
