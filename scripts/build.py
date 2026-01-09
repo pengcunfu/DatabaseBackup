@@ -130,6 +130,11 @@ def build_linux():
 
 def main():
     """主构建函数"""
+    # 切换到项目根目录
+    project_root = Path(__file__).parent.parent
+    os.chdir(project_root)
+    print(f"Working directory: {os.getcwd()}")
+
     if sys.platform == "win32":
         args = build_windows()
     elif sys.platform == "darwin":
