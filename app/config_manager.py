@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class ConfigManager:
     """JSON 配置管理器"""
     
-    def __init__(self, config_file: str = "db_config.json"):
+    def __init__(self, config_file: str = "resources/db_config.json"):
         """
         初始化配置管理器
         
