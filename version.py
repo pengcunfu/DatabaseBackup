@@ -4,16 +4,16 @@
 """
 
 # 版本号
-VERSION = "0.0.5"
+VERSION = "2.0.0"
 
 # 项目元信息
 YEAR = "2025"
 AUTHOR = "pengcunfu"
 
 # 项目信息
-PRODUCT_NAME = "Database Backup Tool"
+PRODUCT_NAME = "Database Migration Tool"
 COMPANY_NAME = "PyDatabaseBackup"
-DESCRIPTION = "MySQL Database Backup and Synchronization Tool"
+DESCRIPTION = "Multi-Database Migration and Backup Tool - Supports MySQL, SQLite, PostgreSQL"
 REPO_URL = "https://github.com/pengcunfu/DatabaseBackup"
 
 # GitHub Releases 相关

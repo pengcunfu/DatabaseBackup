@@ -1,0 +1,20 @@
+{
+    "local": {
+        "db_type": "mysql",
+        "host": "localhost",
+        "port": 3306,
+        "username": "root",
+        "password": "",
+        "database": "source_db"
+    },
+    "remote": {
+        "db_type": "sqlite",
+        "database": "data/target.db"
+    },
+    "sync_options": {
+        "exclude_tables": [],
+        "include_tables": [],
+        "drop_target_tables": true,
+        "convert_data_types": true
+    }
+}

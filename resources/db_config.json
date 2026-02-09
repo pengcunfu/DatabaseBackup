@@ -1,0 +1,24 @@
+{
+    "local": {
+        "db_type": "mysql",
+        "host": "localhost",
+        "port": 3306,
+        "username": "root",
+        "password": "",
+        "database": "local_db"
+    },
+    "remote": {
+        "db_type": "mysql",
+        "host": "192.168.1.100",
+        "port": 3306,
+        "username": "root",
+        "password": "",
+        "database": "remote_db"
+    },
+    "sync_options": {
+        "exclude_tables": [],
+        "include_tables": [],
+        "drop_target_tables": true,
+        "convert_data_types": true
+    }
+}

@@ -8,14 +8,47 @@ JSON 配置管理器
 import json
 import os
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
 
+# 支持的数据库类型
+SUPPORTED_DB_TYPES = ["mysql", "sqlite", "postgresql"]
+
+# 数据库类型显示名称
+DB_TYPE_DISPLAY_NAMES = {
+    "mysql": "MySQL",
+    "sqlite": "SQLite",
+    "postgresql": "PostgreSQL"
+}
+
+# 数据库类型的默认端口
+DB_TYPE_DEFAULT_PORTS = {
+    "mysql": 3306,
+    "postgresql": 5432,
+    "sqlite": None  # SQLite 不需要端口
+}
+
+
 class ConfigManager:
-    """JSON 配置管理器"""
+    """JSON 配置管理器 - 支持多数据库类型"""
+
+    @staticmethod
+    def get_supported_db_types() -> List[str]:
+        """获取支持的数据库类型列表"""
+        return SUPPORTED_DB_TYPES.copy()
+
+    @staticmethod
+    def get_db_type_display_name(db_type: str) -> str:
+        """获取数据库类型的显示名称"""
+        return DB_TYPE_DISPLAY_NAMES.get(db_type.lower(), db_type)
+
+    @staticmethod
+    def get_default_port_for_db_type(db_type: str) -> Optional[int]:
+        """获取数据库类型的默认端口"""
+        return DB_TYPE_DEFAULT_PORTS.get(db_type.lower())
     
     def __init__(self, config_file: str = "resources/db_config.json"):
         """
@@ -59,6 +92,7 @@ class ConfigManager:
         """获取默认配置"""
         return {
             "local": {
+                "db_type": "mysql",
                 "host": "localhost",
                 "port": 3306,
                 "username": "root",
@@ -66,6 +100,7 @@ class ConfigManager:
                 "database": "local_db"
             },
             "remote": {
+                "db_type": "mysql",
                 "host": "192.168.1.100",
                 "port": 3306,
                 "username": "root",
@@ -75,7 +110,8 @@ class ConfigManager:
             "sync_options": {
                 "exclude_tables": [],
                 "include_tables": [],
-                "drop_target_tables": True
+                "drop_target_tables": True,
+                "convert_data_types": True
             }
         }
     
@@ -152,27 +188,36 @@ class ConfigManager:
     def validate_config(self, config: Dict[str, Any]) -> tuple[bool, str]:
         """
         验证配置是否有效
-        
+
         Args:
             config: 配置字典
-        
+
         Returns:
             (是否有效, 错误信息)
         """
-        required_fields = ["host", "port", "username", "database"]
-        
-        for field in required_fields:
-            if field not in config or not config[field]:
-                return False, f"缺少必填字段: {field}"
-        
-        # 验证端口号
-        try:
-            port = int(config["port"])
-            if port < 1 or port > 65535:
-                return False, "端口号必须在 1-65535 之间"
-        except (ValueError, TypeError):
-            return False, "端口号必须是有效的整数"
-        
+        # 获取数据库类型
+        db_type = config.get("db_type", "mysql")
+
+        # 根据数据库类型验证不同的必填字段
+        if db_type == "sqlite":
+            # SQLite 只需要数据库文件路径
+            if "database" not in config or not config["database"]:
+                return False, "缺少必填字段: database (数据库文件路径)"
+        else:
+            # MySQL 和 PostgreSQL 需要 host, port, username, database
+            required_fields = ["host", "port", "username", "database"]
+            for field in required_fields:
+                if field not in config or not config[field]:
+                    return False, f"缺少必填字段: {field}"
+
+            # 验证端口号
+            try:
+                port = int(config["port"])
+                if port < 1 or port > 65535:
+                    return False, "端口号必须在 1-65535 之间"
+            except (ValueError, TypeError):
+                return False, "端口号必须是有效的整数"
+
         return True, ""
     
     def export_config(self, export_path: str) -> bool:

@@ -23,6 +23,7 @@ from PySide6.QtGui import QIcon, QAction, QFont
 
 from .db_config import DatabaseConfig, create_default_config
 from .db_sync import DatabaseSynchronizer
+from .db_migration import DatabaseMigration
 from .config_manager import get_config_manager
 from .config_dialog import ConfigDialog
 from .task_scheduler import TaskScheduler
@@ -35,54 +36,171 @@ logger = logging.getLogger(__name__)
 
 
 class SyncWorker(QThread):
-    """后台同步工作线程"""
+    """后台同步/迁移工作线程"""
     log_updated = Signal(str)
     sync_finished = Signal(bool, str)
-    progress_updated = Signal(int)
+    progress_updated = Signal(int, str)  # 进度, 消息
 
-    def __init__(self, sync_type, config, sql_file=""):
+    def __init__(self, operation_type, source_config, target_config=None, sql_file=""):
         super().__init__()
-        self.sync_type = sync_type
-        self.config = config
+        self.operation_type = operation_type
+        self.source_config = source_config
+        self.target_config = target_config
         self.sql_file = sql_file
 
     def run(self):
-        """执行同步任务"""
+        """执行同步/迁移任务"""
         try:
-            sync = DatabaseSynchronizer(self.config)
+            self.log_updated.emit(f"[INFO] 开始执行: {self.operation_type}")
 
-            self.log_updated.emit(f"[INFO] 开始执行: {self.sync_type}")
-
-            if self.sync_type == '远程到本地':
-                result = sync.sync_remote_to_local()
-            elif self.sync_type == '本地到远程':
-                result = sync.sync_local_to_remote()
-            elif self.sync_type == '导出SQL':
-                result = sync.export_sql()
-            elif self.sync_type == '导入SQL':
-                if not self.sql_file or not os.path.exists(self.sql_file):
-                    self.sync_finished.emit(False, "SQL 文件不存在")
-                    return
-                result = sync.import_sql(self.sql_file)
-            elif self.sync_type == '执行SQL':
-                if not self.sql_file or not os.path.exists(self.sql_file):
-                    self.sync_finished.emit(False, "SQL 文件不存在")
-                    return
-                self.config.sql_file = self.sql_file
-                result = sync.execute_sql()
+            # 判断是迁移模式还是传统同步模式
+            if self.operation_type == '数据库迁移':
+                # 使用新的迁移模块
+                self._run_migration()
+            elif self.operation_type == '导出SQL':
+                # 使用新的导出功能
+                self._run_export()
+            elif self.operation_type == '导入SQL':
+                # 使用新的导入功能
+                self._run_import()
             else:
-                result = "未知的同步类型"
-                self.sync_finished.emit(False, result)
-                return
-
-            self.log_updated.emit(f"[INFO] {result}")
-            self.sync_finished.emit(True, result)
+                # 使用传统的同步模块(向后兼容)
+                self._run_sync()
 
         except Exception as e:
-            error_msg = f"同步失败: {str(e)}"
+            error_msg = f"操作失败: {str(e)}"
             logger.error(error_msg, exc_info=True)
             self.log_updated.emit(f"[ERROR] {error_msg}")
             self.sync_finished.emit(False, error_msg)
+
+    def _run_sync(self):
+        """运行传统同步模式"""
+        from .db_config import DatabaseConfig
+
+        # 创建 DatabaseConfig 对象
+        config = DatabaseConfig(
+            host=self.source_config.get('host'),
+            port=self.source_config.get('port'),
+            username=self.source_config.get('username'),
+            password=self.source_config.get('password'),
+            database=self.source_config.get('database')
+        )
+
+        sync = DatabaseSynchronizer(config)
+
+        if self.operation_type == '远程到本地':
+            result = sync.sync_remote_to_local()
+        elif self.operation_type == '本地到远程':
+            result = sync.sync_local_to_remote()
+        elif self.operation_type == '执行SQL':
+            if not self.sql_file or not os.path.exists(self.sql_file):
+                self.sync_finished.emit(False, "SQL 文件不存在")
+                return
+            config.sql_file = self.sql_file
+            result = sync.execute_sql()
+        else:
+            result = "未知的操作类型"
+            self.sync_finished.emit(False, result)
+            return
+
+        self.log_updated.emit(f"[INFO] {result}")
+        self.sync_finished.emit(True, result)
+
+    def _run_migration(self):
+        """运行数据库迁移"""
+        if not self.target_config:
+            self.sync_finished.emit(False, "缺少目标数据库配置")
+            return
+
+        # 创建迁移对象
+        migration = DatabaseMigration(self.source_config, self.target_config)
+
+        # 连接数据库
+        if not migration.connect():
+            self.sync_finished.emit(False, "数据库连接失败")
+            return
+
+        try:
+            # 执行迁移
+            success = migration.migrate_database(
+                drop_target_tables=True,
+                convert_types=True,
+                progress_callback=lambda p, msg: self.progress_updated.emit(p, msg)
+            )
+
+            if success:
+                self.log_updated.emit("[INFO] 数据库迁移成功")
+                self.sync_finished.emit(True, "数据库迁移成功")
+            else:
+                self.log_updated.emit("[WARNING] 数据库迁移部分失败")
+                self.sync_finished.emit(False, "数据库迁移部分失败")
+
+        finally:
+            migration.close()
+
+    def _run_export(self):
+        """运行数据库导出"""
+        # 创建迁移对象(只需要源配置)
+        migration = DatabaseMigration(self.source_config, {})
+
+        # 连接源数据库
+        if not migration.source_adapter.connect():
+            self.sync_finished.emit(False, "数据库连接失败")
+            return
+
+        try:
+            # 生成导出文件名
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            db_name = self.source_config.get('database', 'database')
+            output_path = f"export_{db_name}_{timestamp}.sql"
+
+            # 执行导出
+            success = migration.export_database(
+                output_path=output_path,
+                include_data=True,
+                progress_callback=lambda p, msg: self.progress_updated.emit(p, msg)
+            )
+
+            if success:
+                self.log_updated.emit(f"[INFO] SQL导出成功: {output_path}")
+                self.sync_finished.emit(True, f"SQL导出成功: {output_path}")
+            else:
+                self.sync_finished.emit(False, "SQL导出失败")
+
+        finally:
+            migration.source_adapter.close()
+
+    def _run_import(self):
+        """运行数据库导入"""
+        if not self.sql_file or not os.path.exists(self.sql_file):
+            self.sync_finished.emit(False, "SQL 文件不存在")
+            return
+
+        # 创建迁移对象(只需要目标配置)
+        migration = DatabaseMigration({}, self.source_config)
+
+        # 连接目标数据库
+        if not migration.target_adapter.connect():
+            self.sync_finished.emit(False, "数据库连接失败")
+            return
+
+        try:
+            # 执行导入
+            success, errors = migration.import_database(
+                sql_file_path=self.sql_file,
+                progress_callback=lambda p, msg: self.progress_updated.emit(p, msg)
+            )
+
+            if success:
+                self.log_updated.emit("[INFO] SQL导入成功")
+                self.sync_finished.emit(True, "SQL导入成功")
+            else:
+                error_msg = f"SQL导入部分失败: {len(errors)} 个错误"
+                self.log_updated.emit(f"[WARNING] {error_msg}")
+                self.sync_finished.emit(False, error_msg)
+
+        finally:
+            migration.target_adapter.close()
 
 
 class MainWindow(QMainWindow):
@@ -181,7 +299,7 @@ class MainWindow(QMainWindow):
         help_menu.addAction(about_action)
 
     def create_manual_sync_tab(self):
-        """创建手动同步Tab页"""
+        """创建手动同步/迁移Tab页"""
         tab_widget = QWidget()
         tab_layout = QVBoxLayout(tab_widget)
         tab_layout.setSpacing(8)
@@ -191,14 +309,14 @@ class MainWindow(QMainWindow):
         control_layout = QHBoxLayout()
         control_layout.setSpacing(8)
 
-        control_layout.addWidget(QLabel("同步模式:"))
+        control_layout.addWidget(QLabel("操作模式:"))
 
         self.sync_type_combo = QComboBox()
-        self.sync_type_combo.addItems(["远程到本地", "本地到远程", "导出SQL", "导入SQL", "执行SQL"])
+        self.sync_type_combo.addItems(["数据库迁移", "远程到本地", "本地到远程", "导出SQL", "导入SQL", "执行SQL"])
         self.sync_type_combo.currentTextChanged.connect(self.on_sync_type_changed)
         control_layout.addWidget(self.sync_type_combo)
 
-        self.start_button = QPushButton("开始同步")
+        self.start_button = QPushButton("开始执行")
         self.start_button.clicked.connect(self.start_sync)
         self.start_button.setMinimumWidth(100)
         control_layout.addWidget(self.start_button)
@@ -252,7 +370,7 @@ class MainWindow(QMainWindow):
         # 进度条
         self.progress_bar = QProgressBar()
         self.progress_bar.setVisible(False)
-        self.progress_bar.setRange(0, 0)  # 不确定进度
+        self.progress_bar.setRange(0, 100)  # 0-100%
         log_layout.addWidget(self.progress_bar)
 
         tab_layout.addWidget(log_group)
@@ -417,6 +535,12 @@ class MainWindow(QMainWindow):
             self.sql_file_path = ""
             self.sql_file_input.clear()
 
+        # 根据操作类型更新按钮文本
+        if sync_type == "数据库迁移":
+            self.start_button.setText("开始迁移")
+        else:
+            self.start_button.setText("开始执行")
+
     def select_sql_file(self):
         """选择SQL文件"""
         file_path, _ = QFileDialog.getOpenFileName(
@@ -432,7 +556,7 @@ class MainWindow(QMainWindow):
             self.log_output.append(f"[INFO] 已选择 SQL 文件: {file_path}")
 
     def start_sync(self):
-        """开始同步"""
+        """开始同步/迁移"""
         sync_type = self.sync_type_combo.currentText()
 
         if sync_type == "执行SQL" and not self.sql_file_path:
@@ -445,7 +569,13 @@ class MainWindow(QMainWindow):
             remote_config = self.config_manager.get_remote_config()
 
             # 根据同步类型选择配置
-            if sync_type == "远程到本地":
+            if sync_type == "数据库迁移":
+                source_config = local_config  # 本地作为源
+                target_config = remote_config  # 远程作为目标
+                self.log_output.append("[INFO] 模式: 数据库迁移")
+                self.log_output.append(f"  源数据库: {source_config.get('db_type', 'mysql')} - {source_config.get('host')}:{source_config.get('port')}/{source_config.get('database')}")
+                self.log_output.append(f"  目标数据库: {target_config.get('db_type', 'mysql')} - {target_config.get('host')}:{target_config.get('port')}/{target_config.get('database')}")
+            elif sync_type == "远程到本地":
                 source_config = remote_config
                 target_config = local_config
                 self.log_output.append("[INFO] 模式: 远程到本地")
@@ -459,30 +589,34 @@ class MainWindow(QMainWindow):
                 self.log_output.append(f"  目标: {target_config.get('host')}:{target_config.get('port')}/{target_config.get('database')}")
             elif sync_type == "导出SQL":
                 source_config = local_config
+                target_config = None
                 self.log_output.append("[INFO] 模式: 导出SQL")
                 self.log_output.append(f"  数据库: {source_config.get('host')}:{source_config.get('port')}/{source_config.get('database')}")
             elif sync_type == "导入SQL":
-                target_config = local_config
+                source_config = local_config  # 这里用local_config作为目标
+                target_config = None
                 if not self.sql_file_path:
                     self.log_output.append("[ERROR] 请选择要导入的 SQL 文件")
                     QMessageBox.warning(self, "警告", "请选择要导入的 SQL 文件")
                     return
                 self.log_output.append("[INFO] 模式: 导入SQL")
-                self.log_output.append(f"  目标: {target_config.get('host')}:{target_config.get('port')}/{target_config.get('database')}")
+                self.log_output.append(f"  目标: {source_config.get('host')}:{source_config.get('port')}/{source_config.get('database')}")
                 self.log_output.append(f"  文件: {self.sql_file_path}")
             elif sync_type == "执行SQL":
-                target_config = local_config
+                source_config = local_config
+                target_config = None
                 self.log_output.append("[INFO] 模式: 执行SQL")
-                self.log_output.append(f"  目标: {target_config.get('host')}:{target_config.get('port')}/{target_config.get('database')}")
+                self.log_output.append(f"  目标: {source_config.get('host')}:{source_config.get('port')}/{source_config.get('database')}")
                 self.log_output.append(f"  文件: {self.sql_file_path}")
             else:
-                self.log_output.append(f"[ERROR] 未知的同步类型: {sync_type}")
+                self.log_output.append(f"[ERROR] 未知的操作类型: {sync_type}")
                 return
 
             self.log_output.append("")
 
             # 验证配置
-            if sync_type in ["远程到本地", "本地到远程"]:
+            if sync_type in ["数据库迁移", "远程到本地", "本地到远程"]:
+                # 需要验证源和目标配置
                 valid, msg = self.config_manager.validate_config(source_config)
                 if not valid:
                     self.log_output.append(f"[ERROR] 源数据库配置无效: {msg}")
@@ -495,48 +629,37 @@ class MainWindow(QMainWindow):
                     QMessageBox.critical(self, "错误", f"目标数据库配置无效: {msg}")
                     return
 
-                # 创建数据库配置对象
-                config = DatabaseConfig(
-                    host=source_config.get('host'),
-                    port=source_config.get('port'),
-                    username=source_config.get('username'),
-                    password=source_config.get('password'),
-                    database=source_config.get('database')
-                )
             else:
-                # 导出SQL、导入SQL或执行SQL只需要一个配置
-                if sync_type == "导出SQL":
-                    use_config = source_config
-                else:  # 导入SQL 或 执行SQL
-                    use_config = target_config
+                # 只需要一个配置
+                use_config = source_config
                 valid, msg = self.config_manager.validate_config(use_config)
                 if not valid:
                     self.log_output.append(f"[ERROR] 数据库配置无效: {msg}")
                     QMessageBox.critical(self, "错误", f"数据库配置无效: {msg}")
                     return
 
-                config = DatabaseConfig(
-                    host=use_config.get('host'),
-                    port=use_config.get('port'),
-                    username=use_config.get('username'),
-                    password=use_config.get('password'),
-                    database=use_config.get('database')
-                )
-
             # 开始同步
             self.set_syncing_state(True)
 
             # 创建并启动工作线程
-            self.worker = SyncWorker(sync_type, config, self.sql_file_path)
+            self.worker = SyncWorker(sync_type, source_config, target_config, self.sql_file_path)
             self.worker.log_updated.connect(self.on_log_updated)
             self.worker.sync_finished.connect(self.on_sync_finished)
+            self.worker.progress_updated.connect(self.on_progress_updated)
             self.worker.start()
 
         except Exception as e:
-            error_msg = f"启动同步失败: {str(e)}"
+            error_msg = f"启动操作失败: {str(e)}"
             logger.error(error_msg, exc_info=True)
             self.log_output.append(f"[ERROR] {error_msg}")
             QMessageBox.critical(self, "错误", error_msg)
+
+    def on_progress_updated(self, progress: int, message: str):
+        """进度更新处理"""
+        if self.progress_bar.isVisible():
+            self.progress_bar.setValue(progress)
+        if message:
+            self.log_output.append(f"[PROGRESS] {message}")
 
     def set_syncing_state(self, syncing):
         """设置同步状态"""
@@ -547,7 +670,8 @@ class MainWindow(QMainWindow):
 
         if syncing:
             self.progress_bar.setVisible(True)
-            self.status_label.setText("正在同步...")
+            self.progress_bar.setValue(0)
+            self.status_label.setText("正在执行...")
         else:
             self.progress_bar.setVisible(False)
 
@@ -564,10 +688,10 @@ class MainWindow(QMainWindow):
         self.set_syncing_state(False)
 
         if success:
-            self.status_label.setText("同步完成")
+            self.status_label.setText("执行完成")
             self.log_output.append(f"\n✓ {message}\n")
         else:
-            self.status_label.setText("同步失败")
+            self.status_label.setText("执行失败")
             self.log_output.append(f"\n✗ {message}\n")
 
     def clear_log(self):
